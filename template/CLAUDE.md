@@ -6,23 +6,39 @@
 - Language: C#
 
 ## MCP Tools Available
-Unity Editor 起動中に以下の MCP ツールが利用可能:
+Unity Editor 起動中に以下の MCP ツールが利用可能 (Unity MCP — com.unity.ai.assistant):
 
-### mcp-unity (Editor 操作)
-- Scene: create / load / save / delete / unload / get_scene_info
-- GameObject: select / get / update / duplicate / delete / reparent
-- Transform: move / rotate / scale / set_transform
-- Material: create / assign / modify / get_material_info
-- Component: update_component
-- Asset: add_asset_to_scene, create_prefab
-- Package: add_package
-- Test: run_tests (EditMode / PlayMode)
-- Editor: execute_menu_item, recompile_scripts
-- Console: send_console_log, get_console_logs
-- Batch: batch_execute (アトミック操作、最大100操作)
-- **注意: mcp-unity にスクリーンショット機能はない**
-  - Editor: execute_menu_item で "Tools/MCP/Capture Game View Screenshot" → Read で画像確認
-  - Runtime: gameplay-mcp の take_screenshot を使用
+### Core
+- `Unity_ManageScene` — シーン作成・ロード・保存・削除・情報取得
+- `Unity_ManageGameObject` — GameObject 作成・選択・更新・複製・削除・移動・回転・スケール・親子関係変更
+- `Unity_ManageAsset` — アセット管理（マテリアル作成・割り当て含む）
+- `Unity_CreateScript` — C# スクリプト作成
+- `Unity_ManageScript` — スクリプト管理
+- `Unity_ApplyTextEdits` / `Unity_ScriptApplyEdits` — スクリプト編集
+- `Unity_ValidateScript` — スクリプト検証
+- `Unity_ManageMenuItem` — メニューアイテム実行
+- `Unity_RunCommand` — コマンド実行（コンパイル、テスト等）
+- `Unity_FindInFile` — ファイル内検索
+- `Unity_ReadResource` / `Unity_ListResources` — リソース読み取り
+- `Unity_FindProjectAssets` — アセット検索
+
+### Debug & Diagnostics
+- `Unity_GetConsoleLogs` — コンソールログ取得
+- `Unity_ReadConsole` — コンソール読み取り
+- `Unity_Profiler_*` — プロファイラー情報取得
+
+### Editor & Screenshots
+- `Unity_Camera_Capture` — カメラキャプチャ
+- `Unity_EditorWindow_CaptureScreenshot` — エディタウィンドウのスクリーンショット
+- `Unity_SceneView_CaptureMultiAngleSceneView` — 複数アングルからのシーンビュー撮影
+- `Unity_GetProjectData` — プロジェクト情報取得
+- `Unity_PackageManager_GetData` / `Unity_PackageManager_ExecuteAction` — パッケージ管理
+
+### Assets
+- `Unity_AssetGeneration_GenerateAsset` — アセット生成
+- `Unity_AssetGeneration_GetModels` — モデル取得
+- `Unity_ImportExternalModel` — 外部モデルインポート
+- `Unity_ManageShader` — シェーダー管理
 
 ## Coding Rules
 - [SerializeField] は private フィールドに使用
@@ -36,13 +52,11 @@ Unity Editor 起動中に以下の MCP ツールが利用可能:
 - .unity / .meta / .prefab / .asset ファイルを直接編集しない → MCP を使う
 - Library/ フォルダに触れない
 - ProjectSettings/*.asset を直接編集しない → Unity Editor から設定
-- Packages/manifest.json を直接編集しない → MCP の add_package を使う
+- Packages/manifest.json を直接編集しない → MCP の Unity_PackageManager_ExecuteAction を使う
 
 ## Testing
-- EditMode: MCP run_tests (testMode: "EditMode") で実行
-- PlayMode: MCP run_tests (testMode: "PlayMode") で実行
-  - PlayMode テストには Domain Reload 無効が必要
-- C# 変更後は recompile_scripts → get_console_logs でコンパイルチェック
+- EditMode / PlayMode テスト: MCP `Unity_RunCommand` で実行
+- C# 変更後は `Unity_GetConsoleLogs` でコンパイルエラーを確認
 
 ## Git Workflow
 - .meta ファイルは必ずコミットに含める

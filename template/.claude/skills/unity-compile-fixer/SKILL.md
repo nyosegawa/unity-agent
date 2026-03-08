@@ -8,7 +8,7 @@ context: fork
 # Unity Compile Error Fixer
 
 ## Workflow
-1. MCP (mcp-unity) の `get_console_logs` でエラーを取得
+1. Unity MCP の `Unity_GetConsoleLogs` でエラーを取得
 2. エラーコードを分析して修正
 
 ## Common Unity-Specific Errors
@@ -29,8 +29,7 @@ context: fork
 2. Fix Assembly Definition references (.asmdef)
 3. Update deprecated API calls
 4. Resolve type mismatches
-5. `recompile_scripts` で再コンパイル
-6. `get_console_logs` で結果確認
+5. `Unity_GetConsoleLogs` で結果確認
 
 ## Important
 - ProjectSettings/ProjectVersion.txt で Unity バージョンを確認

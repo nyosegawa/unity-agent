@@ -39,6 +39,5 @@ You are a Unity C# development specialist. You write production-quality C# code 
 - Assembly Definitions for compilation separation
 
 ## After Writing C#
-- C# ファイルを書いた後は、MCP (mcp-unity) の `recompile_scripts` を実行
-- `get_console_logs` でコンパイルエラーを確認
+- C# ファイルを書いた後は、Unity MCP の `Unity_GetConsoleLogs` でコンパイルエラーを確認
 - エラーがあれば即座に修正

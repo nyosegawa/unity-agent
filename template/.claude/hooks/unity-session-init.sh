@@ -28,21 +28,16 @@ if [ -f "$PROJECT_DIR/Packages/manifest.json" ]; then
     echo "Input System: Legacy"
   fi
 
-  # mcp-unity 導入確認
-  if grep -q "com.gamelovers.mcp-unity" "$PROJECT_DIR/Packages/manifest.json" 2>/dev/null; then
-    echo "MCP Unity: Installed"
+  # Unity MCP (com.unity.ai.assistant) 導入確認
+  if grep -q "com.unity.ai.assistant" "$PROJECT_DIR/Packages/manifest.json" 2>/dev/null; then
+    echo "Unity MCP: Installed (com.unity.ai.assistant)"
   else
-    echo "MCP Unity: NOT installed - Unity MCP tools unavailable"
-  fi
-
-  # gameplay-mcp 導入確認
-  if grep -q "jp.nowsprinting.gameplay-mcp" "$PROJECT_DIR/Packages/manifest.json" 2>/dev/null; then
-    echo "Gameplay MCP: Installed"
+    echo "Unity MCP: NOT installed - Unity MCP tools unavailable"
   fi
 fi
 
 echo "==========================="
 echo ""
 echo "REMINDER: Unity Editor が起動中であることを確認。MCP 接続には Unity Editor が必要。"
-echo "REMINDER: C# 変更後は recompile_scripts → get_console_logs でコンパイルチェック。"
+echo "REMINDER: C# 変更後は Unity_GetConsoleLogs でコンパイルエラーを確認。"
 echo "REMINDER: .unity / .meta / .prefab は直接編集不可 → MCP ツール使用。"

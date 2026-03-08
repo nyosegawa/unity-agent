@@ -44,8 +44,8 @@ public class ExampleTests
 ```
 
 ## Running Tests
-- MCP (mcp-unity) の `run_tests` ツールを使用
-- パラメータ: `testMode` ("EditMode" or "PlayMode"), `testFilter`, `returnOnlyFailures`
+- Unity MCP の `Unity_RunCommand` でテスト実行
+- テストモード: EditMode / PlayMode
 
 ## Practices
 - Test one behavior per test method

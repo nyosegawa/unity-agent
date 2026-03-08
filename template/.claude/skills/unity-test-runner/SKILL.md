@@ -1,28 +1,28 @@
 ---
 name: unity-test-runner
-description: Run and analyze Unity tests via mcp-unity MCP. Executes EditMode and PlayMode tests, captures results, and provides detailed failure analysis.
+description: Run and analyze Unity tests via Unity MCP. Executes EditMode and PlayMode tests, captures results, and provides detailed failure analysis.
 disable-model-invocation: true
 allowed-tools: Read, Grep
 ---
 
-# Unity Test Runner (via mcp-unity MCP)
+# Unity Test Runner (via Unity MCP)
 
 ## Running Tests
 
-### MCP (mcp-unity) の `run_tests` ツール
-
-パラメータ:
-- `testMode`: `"EditMode"` or `"PlayMode"` (default: EditMode)
-- `testFilter`: テスト名フィルタ（namespace 含む）
-- `returnOnlyFailures`: `true` で失敗テストのみ返す (default: true)
-- `returnWithLogs`: `true` で詳細ログ付き (default: false)
+### Unity MCP の `Unity_RunCommand` ツール
+テスト実行には `Unity_RunCommand` を使用。
 
 ### PlayMode テストの注意事項
-- Domain Reload が無効である必要がある（WebSocket 接続が切れるため）
+- Domain Reload が無効である必要がある場合がある
 - Project Settings → Editor → Enter Play Mode Settings → Reload Domain: OFF
 
 ### Unity CLI (MCP が使えない場合のフォールバック)
 ```bash
+# Windows
+"C:\Program Files\Unity\Hub\Editor\*\Editor\Unity.exe" ^
+  -batchmode -quit -projectPath . -runTests -testPlatform EditMode -testResults TestResults\results.xml
+
+# macOS
 /Applications/Unity/Hub/Editor/*/Unity.app/Contents/MacOS/Unity \
   -batchmode -quit \
   -projectPath "$CLAUDE_PROJECT_DIR" \

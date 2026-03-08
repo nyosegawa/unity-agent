@@ -6,14 +6,13 @@
 #   1. .claude/ ディレクトリ一式をコピー（hooks, agents, skills, settings.json）
 #   2. CLAUDE.md をコピー
 #   3. AGENTS.md をコピー（Codex CLI 用、オプション）
-#   4. Editor/McpScreenshotHelper.cs をコピー
-#   5. Hook スクリプトに実行権限を付与
-#   6. MCP サーバーの設定（claude mcp add-json）
+#   4. Hook スクリプトに実行権限を付与
+#   5. MCP サーバーの接続案内
 #
 # このスクリプトが行わないこと（手動が必要）:
-#   - Unity パッケージのインストール（mcp-unity, gameplay-mcp）
+#   - Unity パッケージのインストール（com.unity.ai.assistant）
 #   - Unity Editor の起動
-#   - Blender アドオンのインストール
+#   - MCP 接続の承認（Unity Editor 側）
 #   - API キーの取得
 
 set -euo pipefail
@@ -28,14 +27,6 @@ fi
 
 UNITY_PROJECT="$1"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-TEMPLATE_DIR="$SCRIPT_DIR/template"
-
-# テンプレートディレクトリ確認
-if [ ! -d "$TEMPLATE_DIR/.claude" ]; then
-  echo "ERROR: template/ ディレクトリが見つかりません"
-  echo "  このスクリプトはリポジトリルートから実行してください"
-  exit 1
-fi
 
 # Unity プロジェクト確認
 if [ ! -d "$UNITY_PROJECT/Assets" ] || [ ! -d "$UNITY_PROJECT/ProjectSettings" ]; then
@@ -49,7 +40,7 @@ echo "Target: $UNITY_PROJECT"
 echo ""
 
 # ===== 1. .claude/ ディレクトリをコピー =====
-echo "[1/6] .claude/ ディレクトリをコピー..."
+echo "[1/5] .claude/ ディレクトリをコピー..."
 
 # 既存の .claude/ があれば確認
 if [ -d "$UNITY_PROJECT/.claude" ]; then
@@ -58,74 +49,84 @@ if [ -d "$UNITY_PROJECT/.claude" ]; then
   if [[ "$confirm" != [yY] ]]; then
     echo "  スキップしました"
   else
-    cp -r "$TEMPLATE_DIR/.claude/"* "$UNITY_PROJECT/.claude/"
+    cp -r "$SCRIPT_DIR/template/.claude/"* "$UNITY_PROJECT/.claude/"
     echo "  Done (上書き)"
   fi
 else
-  cp -r "$TEMPLATE_DIR/.claude" "$UNITY_PROJECT/.claude"
+  cp -r "$SCRIPT_DIR/template/.claude" "$UNITY_PROJECT/.claude"
   echo "  Done"
 fi
 
 # ===== 2. CLAUDE.md をコピー =====
-echo "[2/6] CLAUDE.md をコピー..."
+echo "[2/5] CLAUDE.md をコピー..."
 if [ -f "$UNITY_PROJECT/CLAUDE.md" ]; then
   echo "  WARNING: CLAUDE.md が既に存在します。スキップ。"
-  echo "  手動でマージしてください: $TEMPLATE_DIR/CLAUDE.md"
+  echo "  手動でマージしてください: $SCRIPT_DIR/template/CLAUDE.md"
 else
-  cp "$TEMPLATE_DIR/CLAUDE.md" "$UNITY_PROJECT/CLAUDE.md"
+  cp "$SCRIPT_DIR/template/CLAUDE.md" "$UNITY_PROJECT/CLAUDE.md"
   echo "  Done"
 fi
 
 # ===== 3. AGENTS.md をコピー（Codex CLI 用） =====
-echo "[3/6] AGENTS.md をコピー (Codex CLI 用)..."
+echo "[3/5] AGENTS.md をコピー (Codex CLI 用)..."
 if [ -f "$UNITY_PROJECT/AGENTS.md" ]; then
   echo "  WARNING: AGENTS.md が既に存在します。スキップ。"
 else
-  cp "$TEMPLATE_DIR/AGENTS.md" "$UNITY_PROJECT/AGENTS.md"
+  cp "$SCRIPT_DIR/template/AGENTS.md" "$UNITY_PROJECT/AGENTS.md"
   echo "  Done"
 fi
 
-# ===== 4. Editor/McpScreenshotHelper.cs をコピー =====
-echo "[4/6] McpScreenshotHelper.cs をコピー..."
-mkdir -p "$UNITY_PROJECT/Assets/Editor"
-if [ -f "$UNITY_PROJECT/Assets/Editor/McpScreenshotHelper.cs" ]; then
-  echo "  WARNING: McpScreenshotHelper.cs が既に存在します。スキップ。"
-else
-  cp "$TEMPLATE_DIR/Editor/McpScreenshotHelper.cs" "$UNITY_PROJECT/Assets/Editor/McpScreenshotHelper.cs"
-  echo "  Done"
-fi
-
-# ===== 5. 実行権限を付与 =====
-echo "[5/6] Hook スクリプトに実行権限を付与..."
+# ===== 4. 実行権限を付与 =====
+echo "[4/5] Hook スクリプトに実行権限を付与..."
 chmod +x "$UNITY_PROJECT/.claude/hooks/"*.sh
 echo "  Done"
 
-# ===== 6. MCP サーバー設定 =====
-echo "[6/6] MCP サーバー設定..."
+# ===== 5. MCP サーバー設定案内 =====
+echo "[5/5] MCP サーバー設定..."
 echo ""
 
-# mcp-unity
-MCP_UNITY_SERVER="$UNITY_PROJECT/Packages/com.gamelovers.mcp-unity/Server~/build/index.js"
-if [ -f "$MCP_UNITY_SERVER" ]; then
-  echo "  mcp-unity サーバーファイルを検出: $MCP_UNITY_SERVER"
-  echo "  以下のコマンドで Claude Code に追加:"
-  echo ""
-  echo "  claude mcp add-json mcp-unity '{\"command\":\"node\",\"args\":[\"$MCP_UNITY_SERVER\"]}'"
-  echo ""
-else
-  echo "  mcp-unity パッケージが未インストールです。"
-  echo "  Unity Editor で以下を実行:"
-  echo "    Window > Package Manager > + > Add package from git URL"
-  echo "    URL: https://github.com/CoderGamester/mcp-unity.git"
-  echo ""
-  echo "  インストール後、以下のコマンドで Claude Code に追加:"
-  echo "  claude mcp add-json mcp-unity '{\"command\":\"node\",\"args\":[\"$UNITY_PROJECT/Packages/com.gamelovers.mcp-unity/Server~/build/index.js\"]}'"
-  echo ""
-fi
+# Unity MCP (com.unity.ai.assistant)
+echo "  === Unity MCP (com.unity.ai.assistant) ==="
+echo ""
+echo "  Step 1: Unity Editor でパッケージをインストール"
+echo "    Window > Package Manager > + > Add package by name"
+echo "    Name: com.unity.ai.assistant"
+echo ""
+echo "  Step 2: Claude Code に MCP 接続を追加"
+echo ""
 
-# gameplay-mcp
-echo "  [Optional] gameplay-mcp (ランタイムテスト / スクリーンショット):"
-echo "  claude mcp add-json gameplay-mcp '{\"type\":\"http\",\"url\":\"http://localhost:8010/mcp\"}'"
+# OS 判定
+if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]] || [[ -n "${WINDIR:-}" ]]; then
+  # Windows
+  echo "  Windows:"
+  echo "  .claude.json の mcpServers に以下を追加:"
+  echo '  "unity-mcp": {'
+  echo '    "command": "cmd",'
+  echo '    "args": ["/c", "%USERPROFILE%\\.unity\\relay\\relay_win.exe", "--mcp"]'
+  echo '  }'
+  echo ""
+  echo "  または PowerShell で:"
+  echo '  claude mcp add unity-mcp cmd -- /c %USERPROFILE%\.unity\relay\relay_win.exe --mcp'
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+  # macOS
+  RELAY_PATH="$HOME/.unity/relay/relay"
+  echo "  macOS:"
+  echo "  claude mcp add-json unity-mcp '{\"command\":\"$RELAY_PATH\",\"args\":[\"--mcp\"]}'"
+else
+  # Linux
+  RELAY_PATH="$HOME/.unity/relay/relay"
+  echo "  Linux:"
+  echo "  claude mcp add-json unity-mcp '{\"command\":\"$RELAY_PATH\",\"args\":[\"--mcp\"]}'"
+fi
+echo ""
+
+echo "  Step 3: Unity Editor で接続を承認"
+echo "    Edit > Project Settings > AI > Unity MCP"
+echo "    → Accept で接続を許可"
+echo ""
+
+# Optional MCP servers
+echo "  === Optional MCP サーバー ==="
 echo ""
 
 # nanobanana
@@ -153,8 +154,8 @@ echo "=== セットアップ完了 ==="
 echo ""
 echo "次のステップ:"
 echo "  1. Unity Editor でプロジェクトを開く"
-echo "  2. mcp-unity パッケージをインストール（まだの場合）"
-echo "  3. Tools > MCP Unity > Server Window でサーバー起動を確認"
-echo "  4. 上記の claude mcp add-json コマンドを実行"
+echo "  2. com.unity.ai.assistant パッケージをインストール（まだの場合）"
+echo "  3. Edit > Project Settings > AI > Unity MCP で接続確認"
+echo "  4. 上記の MCP 接続コマンドを実行"
 echo "  5. cd $UNITY_PROJECT && claude"
 echo "  6. テスト: 「シーンのヒエラルキー情報を取得して」"

@@ -11,7 +11,7 @@ COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 # ファイル編集系ツール: .unity/.meta/.asset の直接編集をブロック
 if [[ "$TOOL_NAME" =~ ^(Edit|Write|MultiEdit)$ ]] && [ -n "$FILE_PATH" ]; then
   if [[ "$FILE_PATH" == *.unity ]]; then
-    echo "BLOCKED: .unity ファイルの直接編集禁止。MCP (mcp-unity) の create_scene / load_scene / save_scene を使用してください。" >&2
+    echo "BLOCKED: .unity ファイルの直接編集禁止。Unity MCP の Unity_ManageScene を使用してください。" >&2
     exit 2
   fi
   if [[ "$FILE_PATH" == *.meta ]]; then
@@ -19,7 +19,7 @@ if [[ "$TOOL_NAME" =~ ^(Edit|Write|MultiEdit)$ ]] && [ -n "$FILE_PATH" ]; then
     exit 2
   fi
   if [[ "$FILE_PATH" == *.prefab ]]; then
-    echo "BLOCKED: .prefab ファイルの直接編集禁止。MCP (mcp-unity) の create_prefab / add_asset_to_scene を使用してください。" >&2
+    echo "BLOCKED: .prefab ファイルの直接編集禁止。Unity MCP の Unity_ManageGameObject / Unity_ManageAsset を使用してください。" >&2
     exit 2
   fi
   if [[ "$FILE_PATH" == */Library/* ]]; then

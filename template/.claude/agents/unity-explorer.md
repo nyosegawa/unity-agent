@@ -33,9 +33,9 @@ You are a codebase exploration specialist for Unity projects.
 - UI framework: UGUI, UI Toolkit, or third-party
 
 ## MCP Resources
-mcp-unity の Resources で追加情報を取得可能:
-- Scene hierarchy
-- GameObject details
-- Package list
-- Asset database queries
-- Test information
+Unity MCP の以下のツールで追加情報を取得可能:
+- `Unity_ManageScene` — シーン情報
+- `Unity_ManageGameObject` — GameObject 詳細
+- `Unity_FindProjectAssets` — アセット検索
+- `Unity_GetProjectData` — プロジェクト情報
+- `Unity_PackageManager_GetData` — パッケージ一覧
