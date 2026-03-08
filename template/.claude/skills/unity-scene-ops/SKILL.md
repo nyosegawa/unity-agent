@@ -51,8 +51,39 @@ Unity Editor must be open with com.unity.ai.assistant package installed and MCP 
 - `Unity_AssetGeneration_GenerateAsset` — アセット生成
 - `Unity_AssetGeneration_GetModels` — 生成モデル取得
 
+## Batch Scene Building with Unity_RunCommand
+複数の GameObject を一括配置するには `Unity_RunCommand` に Editor C# コードを渡す:
+```csharp
+internal class CommandScript : IRunCommand
+{
+    public void Execute(ExecutionResult result)
+    {
+        // GameObject 作成
+        var obj = new GameObject("MyObject");
+        obj.AddComponent<SpriteRenderer>();
+        result.RegisterObjectCreation(obj);
+
+        // PhysicsMaterial2D 作成 (Assets に保存)
+        var mat = new PhysicsMaterial2D("BounceMat");
+        mat.bounciness = 1f; mat.friction = 0f;
+        AssetDatabase.CreateAsset(mat, "Assets/Materials/BounceMat.asset");
+
+        // シーン保存
+        EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+        EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
+
+        result.Log("Scene built successfully");
+    }
+}
+```
+- `using UnityEngine; using UnityEditor; using UnityEditor.SceneManagement;` を含める
+- `result.RegisterObjectCreation(obj)` で作成オブジェクトを登録
+- `result.RegisterObjectModification(obj)` で変更オブジェクトを登録
+- アセット作成は `AssetDatabase.CreateAsset()` で保存先を指定
+
 ## Important Notes
-- シーン変更後は保存を忘れずに
+- シーン変更後は `Unity_ManageScene(Action: "Save")` で保存
 - Unity MCP は Unity Editor が起動中でないと接続不可
+- スクリプト作成は Write ではなく `Unity_CreateScript` を使用（.meta 自動生成）
 
 $ARGUMENTS
