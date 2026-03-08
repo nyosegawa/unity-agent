@@ -1,58 +1,24 @@
 ---
 name: unity-scene-ops
-description: Manage Unity scenes, GameObjects, and components through Unity MCP. Use for scene hierarchy manipulation, component setup, and prefab operations.
+description: Manage Unity scenes, GameObjects, and components through Unity MCP. Use when building scenes, placing objects, setting up hierarchy, creating materials, or when user asks to construct or modify a scene.
 disable-model-invocation: true
 ---
 
-# Unity Scene Operations (via Unity MCP — com.unity.ai.assistant)
+# Unity Scene Operations (via Unity MCP)
 
 ## Prerequisites
 Unity Editor must be open with com.unity.ai.assistant package installed and MCP connection active.
 
-## Available MCP Tools
+## Quick Reference
 
-### Scene Management
-- `Unity_ManageScene` — シーン作成・ロード・保存・削除・アンロード・情報取得
+### Single Object Operations
+- `Unity_ManageScene` — シーン作成・ロード・保存・情報取得
+- `Unity_ManageGameObject` — GameObject 作成・移動・回転・スケール・コンポーネント操作
+- `Unity_ManageAsset` — アセット管理（マテリアル含む）
+- `Unity_CreateScript` — C# スクリプト作成（Write ではなくこちらを使う）
 
-### GameObject Operations
-- `Unity_ManageGameObject` — 作成・選択・情報取得・更新・複製・削除・移動・回転・スケール・親子関係変更・コンポーネント操作
-
-### Asset & Material
-- `Unity_ManageAsset` — アセット管理（マテリアル作成・割り当て・変更含む）
-- `Unity_FindProjectAssets` — アセット検索
-- `Unity_ImportExternalModel` — 外部モデルインポート
-- `Unity_ManageShader` — シェーダー管理
-
-### Script Operations
-- `Unity_CreateScript` — C# スクリプト作成
-- `Unity_ManageScript` — スクリプト管理
-- `Unity_ApplyTextEdits` / `Unity_ScriptApplyEdits` — スクリプト編集
-- `Unity_ValidateScript` — スクリプト検証
-
-### Editor & Menu
-- `Unity_ManageMenuItem` — メニューアイテム実行
-- `Unity_ManageEditor` — エディタ操作
-- `Unity_RunCommand` — コマンド実行（コンパイル、テスト等）
-
-### Debug
-- `Unity_GetConsoleLogs` — コンソールログ取得
-- `Unity_ReadConsole` — コンソール読み取り
-
-### Screenshots
-- `Unity_Camera_Capture` — カメラキャプチャ
-- `Unity_EditorWindow_CaptureScreenshot` — エディタウィンドウスクリーンショット
-- `Unity_SceneView_CaptureMultiAngleSceneView` — 複数アングルのシーンビュー
-
-### Package Management
-- `Unity_PackageManager_ExecuteAction` — パッケージ操作
-- `Unity_PackageManager_GetData` — パッケージ情報取得
-
-### Asset Generation
-- `Unity_AssetGeneration_GenerateAsset` — アセット生成
-- `Unity_AssetGeneration_GetModels` — 生成モデル取得
-
-## Batch Scene Building with Unity_RunCommand
-複数の GameObject を一括配置するには `Unity_RunCommand` に Editor C# コードを渡す:
+### Batch Scene Building (Unity_RunCommand)
+複数 GameObject を一括配置する場合:
 ```csharp
 internal class CommandScript : IRunCommand
 {
@@ -60,10 +26,15 @@ internal class CommandScript : IRunCommand
     {
         // GameObject 作成
         var obj = new GameObject("MyObject");
-        obj.AddComponent<SpriteRenderer>();
+        var sr = obj.AddComponent<SpriteRenderer>();
+        sr.color = Color.red;
         result.RegisterObjectCreation(obj);
 
-        // PhysicsMaterial2D 作成 (Assets に保存)
+        // コンポーネント追加
+        var rb = obj.AddComponent<Rigidbody2D>();
+        rb.gravityScale = 0;
+
+        // PhysicsMaterial2D (アセット保存)
         var mat = new PhysicsMaterial2D("BounceMat");
         mat.bounciness = 1f; mat.friction = 0f;
         AssetDatabase.CreateAsset(mat, "Assets/Materials/BounceMat.asset");
@@ -71,19 +42,38 @@ internal class CommandScript : IRunCommand
         // シーン保存
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
-
-        result.Log("Scene built successfully");
+        result.Log("Done");
     }
 }
 ```
-- `using UnityEngine; using UnityEditor; using UnityEditor.SceneManagement;` を含める
-- `result.RegisterObjectCreation(obj)` で作成オブジェクトを登録
-- `result.RegisterObjectModification(obj)` で変更オブジェクトを登録
-- アセット作成は `AssetDatabase.CreateAsset()` で保存先を指定
+必要な using: `UnityEngine`, `UnityEditor`, `UnityEditor.SceneManagement`
 
-## Important Notes
-- シーン変更後は `Unity_ManageScene(Action: "Save")` で保存
-- Unity MCP は Unity Editor が起動中でないと接続不可
-- スクリプト作成は Write ではなく `Unity_CreateScript` を使用（.meta 自動生成）
+### Screenshots (確認用)
+- `Unity_Camera_Capture` — ゲームカメラからの撮影
+- `Unity_EditorWindow_CaptureScreenshot` — エディタウィンドウ
+- `Unity_SceneView_CaptureMultiAngleSceneView` — 複数アングル
+
+### Debug
+- `Unity_GetConsoleLogs` — エラー確認
+- `Unity_ReadConsole` — コンソール読み取り
+
+## Examples
+
+### Example 1: 新規シーン作成してオブジェクト配置
+1. `Unity_ManageScene(Action: "Create", Name: "MyScene", Path: "Assets/Scenes")`
+2. `Unity_ManageScene(Action: "Load", Name: "MyScene", Path: "Assets/Scenes")`
+3. `Unity_RunCommand` でオブジェクト一括配置
+4. `Unity_Camera_Capture` で確認
+5. `Unity_ManageScene(Action: "Save")`
+
+### Example 2: 既存オブジェクトの変更
+1. `Unity_ManageScene(Action: "GetHierarchy")` で構造確認
+2. `Unity_ManageGameObject(action: "modify", target: "Player", position: [0,1,0])`
+
+## Troubleshooting
+- **MCP 接続エラー**: Unity Editor が起動中か確認。Edit > Project Settings > AI > Unity MCP
+- **オブジェクトが見つからない**: `Unity_ManageScene(Action: "GetHierarchy")` で名前を確認
+- **スプライトが表示されない**: SpriteRenderer のスプライトが null の可能性。テクスチャの Import Settings で Sprite (2D and UI) に設定されているか確認
+- **RunCommand 失敗**: `result.LogError()` のメッセージを確認。using の不足が多い
 
 $ARGUMENTS

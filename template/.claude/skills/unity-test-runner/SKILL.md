@@ -1,6 +1,6 @@
 ---
 name: unity-test-runner
-description: Run and analyze Unity tests via Unity MCP. Executes EditMode and PlayMode tests, captures results, and provides detailed failure analysis.
+description: Run and analyze Unity tests via Unity MCP. Use when running EditMode or PlayMode tests, creating test scripts, analyzing test failures, or when user asks to test code.
 disable-model-invocation: true
 allowed-tools: Read, Grep
 ---
@@ -9,14 +9,21 @@ allowed-tools: Read, Grep
 
 ## Running Tests
 
-### Unity MCP の `Unity_RunCommand` ツール
-テスト実行には `Unity_RunCommand` を使用。
+### Via MCP (推奨)
+`Unity_RunCommand` でテスト実行コードを記述:
+```csharp
+internal class CommandScript : IRunCommand
+{
+    public void Execute(ExecutionResult result)
+    {
+        // テスト実行のトリガー
+        var testRunner = UnityEditor.TestTools.TestRunner;
+        result.Log("Tests triggered");
+    }
+}
+```
 
-### PlayMode テストの注意事項
-- Domain Reload が無効である必要がある場合がある
-- Project Settings → Editor → Enter Play Mode Settings → Reload Domain: OFF
-
-### Unity CLI (MCP が使えない場合のフォールバック)
+### Via Unity CLI (フォールバック)
 ```bash
 # Windows
 "C:\Program Files\Unity\Hub\Editor\*\Editor\Unity.exe" ^
@@ -24,16 +31,49 @@ allowed-tools: Read, Grep
 
 # macOS
 /Applications/Unity/Hub/Editor/*/Unity.app/Contents/MacOS/Unity \
-  -batchmode -quit \
-  -projectPath "$CLAUDE_PROJECT_DIR" \
-  -runTests \
-  -testPlatform EditMode \
-  -testResults "$CLAUDE_PROJECT_DIR/TestResults/results.xml"
+  -batchmode -quit -projectPath . -runTests -testPlatform EditMode \
+  -testResults TestResults/results.xml
 ```
 
-## Analyzing Results
-1. total / passed / failed / skipped を報告
+## Test File Structure
+```csharp
+using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
+
+[TestFixture]
+public class PlayerTests
+{
+    [Test]
+    public void Health_TakeDamage_ReducesHealth()
+    {
+        // Arrange
+        var go = new GameObject();
+        var player = go.AddComponent<Player>();
+        // Act
+        player.TakeDamage(10);
+        // Assert
+        Assert.AreEqual(90, player.Health);
+        Object.DestroyImmediate(go);
+    }
+}
+```
+
+## Examples
+
+### Example 1: EditMode テスト作成と実行
+1. `Unity_CreateScript` で Tests/Editor/ にテストスクリプト作成
+2. `Unity_GetConsoleLogs` でコンパイル確認
+3. テスト実行
+
+### Example 2: テスト失敗の分析
+1. テスト結果の total / passed / failed / skipped を報告
 2. 失敗テスト: テスト名、エラーメッセージ、スタックトレース
-3. 各失敗の原因と修正提案
+3. 原因分析と修正提案
+
+## Troubleshooting
+- **テストが見つからない**: .asmdef の `includePlatforms` と参照を確認
+- **PlayMode テスト接続切れ**: Project Settings > Editor > Enter Play Mode Settings > Reload Domain: OFF
+- **テストアセンブリエラー**: Tests/ フォルダの .asmdef が Runtime の .asmdef を参照しているか確認
 
 $ARGUMENTS
