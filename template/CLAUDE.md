@@ -77,10 +77,19 @@ Unity_RunCommand(Code: "using UnityEngine; using UnityEditor; ...", Title: "Buil
 - Packages/manifest.json を直接編集しない → MCP の Unity_PackageManager_ExecuteAction を使う
 - 旧 Input API (`Input.GetKey`, `Input.mousePosition` 等) を使わない → New Input System を使う
 
+## Development Loop (必ずこの順序で作業する)
+1. **スクリプト作成/編集** → `Unity_CreateScript` or `Edit`
+2. **コンパイル確認** → `Unity_GetConsoleLogs` でエラー確認。エラーがあれば修正して再確認
+3. **シーン構築/変更** → `Unity_RunCommand` or `Unity_ManageGameObject` 等
+4. **視覚確認** → `Unity_Camera_Capture` でスクリーンショット撮影。配置・見た目を確認
+5. **問題があれば修正** → 1 に戻る
+6. **次の機能へ進む**
+
+各ステップで確認してから次に進むこと。まとめて作って最後に確認しない。
+
 ## Testing
 - EditMode / PlayMode テスト: MCP `Unity_RunCommand` で実行
-- C# 変更後は `Unity_GetConsoleLogs` でコンパイルエラーを確認
-- 視覚確認: `Unity_Camera_Capture` でゲームビューを撮影して確認
+- C# 変更後は必ず `Unity_GetConsoleLogs` でコンパイルエラーを確認
 
 ## Git Workflow
 - .meta ファイルは必ずコミットに含める
