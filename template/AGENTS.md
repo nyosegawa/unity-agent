@@ -38,12 +38,18 @@
 ## Commands
 ```bash
 # Compile check (via Unity CLI)
+# macOS:
 /Applications/Unity/Hub/Editor/*/Unity.app/Contents/MacOS/Unity \
   -batchmode -quit -projectPath . -executeMethod CompilationPipeline.RequestScriptCompilation
+# Windows:
+# "C:\Program Files\Unity\Hub\Editor\*\Editor\Unity.exe" -batchmode -quit -projectPath . -executeMethod CompilationPipeline.RequestScriptCompilation
 
 # Run EditMode tests
+# macOS:
 /Applications/Unity/Hub/Editor/*/Unity.app/Contents/MacOS/Unity \
   -batchmode -quit -projectPath . -runTests -testPlatform EditMode -testResults TestResults/results.xml
+# Windows:
+# "C:\Program Files\Unity\Hub\Editor\*\Editor\Unity.exe" -batchmode -quit -projectPath . -runTests -testPlatform EditMode -testResults TestResults\results.xml
 ```
 
 ## Safety
