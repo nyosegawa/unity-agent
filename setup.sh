@@ -203,7 +203,9 @@ else
   if command -v jq &>/dev/null; then
     tmp=$(mktemp)
     jq '.dependencies["com.unity.ai.assistant"] = "2.0.0-pre.1"' "$MANIFEST" > "$tmp"
-    mv "$tmp" "$MANIFEST"
+    # mv は Windows FS で権限エラーが出るため cp + rm を使う
+    cp "$tmp" "$MANIFEST"
+    rm -f "$tmp"
     echo "  Done (jq)"
   else
     # sed: "dependencies": { の次の行に追加
@@ -283,9 +285,24 @@ else
   else
     if is_wsl; then
       # WSL → Windows relay
-      WIN_HOME=$(wslpath "$(cmd.exe /c 'echo %USERPROFILE%' 2>/dev/null | tr -d '\r')" 2>/dev/null || echo "")
-      if [ -n "$WIN_HOME" ] && [ -f "$WIN_HOME/.unity/relay/relay_win.exe" ]; then
-        RELAY_WIN="$WIN_HOME/.unity/relay/relay_win.exe"
+      # 方法1: プロジェクトパスからユーザー名を抽出 (/mnt/c/Users/USERNAME/...)
+      # 方法2: glob で全ユーザーを検索
+      RELAY_WIN=""
+      if [[ "$UNITY_PROJECT" =~ ^/mnt/[a-z]/[Uu]sers/([^/]+)/ ]]; then
+        WIN_USER="${BASH_REMATCH[1]}"
+        DRIVE="${UNITY_PROJECT:5:1}"
+        candidate="/mnt/$DRIVE/Users/$WIN_USER/.unity/relay/relay_win.exe"
+        if [ -f "$candidate" ]; then
+          RELAY_WIN="$candidate"
+        fi
+      fi
+      # フォールバック: glob 検索
+      if [ -z "$RELAY_WIN" ]; then
+        RELAY_WIN=$(ls /mnt/c/Users/*/.unity/relay/relay_win.exe 2>/dev/null | head -1 || echo "")
+      fi
+
+      if [ -n "$RELAY_WIN" ]; then
+        echo "  relay: $RELAY_WIN"
         claude mcp add-json unity-mcp "{\"command\":\"$RELAY_WIN\",\"args\":[\"--mcp\"]}" -s project 2>/dev/null && \
           echo "  Done (WSL → Windows relay)" || \
           echo "  WARNING: claude mcp add に失敗。手動で設定してください。"
