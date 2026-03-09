@@ -2,7 +2,7 @@
 
 ## Environment
 - Unity 6.x LTS / URP
-- Input: New Input System (`UnityEngine.InputSystem`) — `Input.GetKey` 等の旧 API は使用不可
+- Input: New Input System (`UnityEngine.InputSystem`)
 - Target: WebGL
 - Language: C#
 
@@ -42,7 +42,7 @@ Unity Editor 起動中に以下の MCP ツールが利用可能 (Unity MCP — c
 - `Unity_ManageShader` — シェーダー管理
 
 ## Script Creation Rules
-- **新規スクリプトは `Unity_CreateScript` MCP ツールで作成**（Write ツールではなく）。.meta ファイルが自動生成され、AssetDatabase に正しく登録される
+- **新規スクリプトは `Unity_CreateScript` MCP ツールで作成する**。.meta ファイルが自動生成され、AssetDatabase に正しく登録される
 - 既存スクリプトの編集は `Edit` ツールまたは `Unity_ScriptApplyEdits` を使用
 - スクリプト作成・編集後は `Unity_GetConsoleLogs` でコンパイルエラーを確認
 
@@ -92,7 +92,6 @@ Unity_RunCommand(Code: "using UnityEngine; using UnityEditor; ...", Title: "Buil
 - タグ比較は `CompareTag()` を使う
 - `Camera.main` はキャッシュして使う
 - `Update()` / `FixedUpdate()` 内では LINQ を避ける
-- Input は `UnityEngine.InputSystem` を使用: `Mouse.current`, `Keyboard.current` 等
 
 ## ファイル操作ルール
 - `.unity` / `.meta` / `.prefab` / `.asset` ファイルは MCP ツールで操作する
@@ -101,8 +100,8 @@ Unity_RunCommand(Code: "using UnityEngine; using UnityEditor; ...", Title: "Buil
 - `Library/`, `Temp/`, `Logs/` には触れない
 
 ## Unity 6 固有ルール
-- Input は New Input System（`UnityEngine.InputSystem`）を使う。旧 API（`Input.GetKey` 等）は存在しない
-- ビルドは `Unity_RunCommand` + `BuildPipeline` で実行する。Unity 6 のメニューは「Build Profiles」（旧「Build Settings」は廃止済み）
+- Input は New Input System（`UnityEngine.InputSystem`）を使う: `Mouse.current`, `Keyboard.current`, `Gamepad.current` 等
+- ビルドは `Unity_RunCommand` + `BuildPipeline` で実行する。Unity 6 のメニューは「Build Profiles」
 
 ## PLANS.md 駆動開発
 大規模なゲーム開発では PLANS.md でフェーズ管理する:
@@ -122,8 +121,8 @@ Unity_RunCommand(Code: "using UnityEngine; using UnityEditor; ...", Title: "Buil
 各ステップで確認してから次に進むこと。まとめて作って最後に確認しない。
 
 ## WebGL Build
-ビルドは `Unity_RunCommand` で実行する。**Unity 6 には「Build Settings」は存在しない（「Build Profiles」に変更済み）。旧来の「File > Build Settings」を案内してはいけない。**
-**ビルド前に必ず `Unity_GetConsoleLogs` でコンパイル完了・エラーなしを確認してからビルドを実行すること。**
+ビルドは `Unity_RunCommand` で実行する。
+ビルド前に `Unity_GetConsoleLogs` でコンパイル完了・エラーなしを確認すること。
 
 ```csharp
 internal class CommandScript : IRunCommand
