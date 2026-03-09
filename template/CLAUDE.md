@@ -98,7 +98,7 @@ Unity_RunCommand(Code: "using UnityEngine; using UnityEditor; ...", Title: "Buil
 ## Do NOT
 - .unity / .meta / .prefab / .asset ファイルを直接編集しない → MCP を使う
 - Library/ フォルダに触れない
-- ProjectSettings/*.asset を直接編集しない → `Unity_RunCommand` で C# API を使う
+- ProjectSettings の変更は `Unity_RunCommand` で C# API（`PlayerSettings`, `QualitySettings`, `GraphicsSettings` 等）を使う
 - Packages/manifest.json を直接編集しない → MCP の Unity_PackageManager_ExecuteAction を使う
 
 - 旧 Input API (`Input.GetKey`, `Input.mousePosition` 等) を使わない → New Input System を使う
