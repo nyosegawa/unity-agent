@@ -27,6 +27,7 @@ context: fork
 | CS0117 | No member in type | API may have changed in Unity version |
 | CS0619 | Member is obsolete | Use recommended replacement |
 | CS0428 | Cannot convert method group | Add () for method call |
+| CS0118 | Namespace used as type | Use alias: `using UIImage = UnityEngine.UI.Image;` |
 
 ## Examples
 
@@ -47,6 +48,12 @@ Fix: Replace `Input.GetKey(KeyCode.Space)` with `Keyboard.current.spaceKey.isPre
 warning CS0618: 'FindObjectOfType<T>()' is obsolete
 ```
 Fix: Replace with `FindFirstObjectByType<T>()`
+
+### Example 4: Image namespace conflict (CS0118)
+```
+error CS0118: 'Image' is a namespace but is used like a type
+```
+Fix: Add alias `using UIImage = UnityEngine.UI.Image;` and use `UIImage` instead of `Image`
 
 ## Troubleshooting
 - **エラーが消えない**: .asmdef の参照が欠けている可能性。Assembly Definition を確認

@@ -70,10 +70,42 @@ internal class CommandScript : IRunCommand
 1. `Unity_ManageScene(Action: "GetHierarchy")` で構造確認
 2. `Unity_ManageGameObject(action: "modify", target: "Player", position: [0,1,0])`
 
+## Unity_RunCommand Known Pitfalls
+
+### Image 名前空間の衝突 (CS0118)
+`UnityEngine.UI.Image` を使う場合、`Image` が namespace と型名で競合しコンパイルエラーになる。
+```csharp
+// NG: CS0118 'Image' is a namespace but is used like a type
+using UnityEngine.UI;
+var img = obj.AddComponent<Image>();
+
+// OK: エイリアスで回避
+using UIImage = UnityEngine.UI.Image;
+var img = obj.AddComponent<UIImage>();
+```
+
+### TextMeshPro フォントの取得
+`TMP_Settings.defaultFontAsset` は null を返すことがある。`AssetDatabase.FindAssets` を使う:
+```csharp
+// NG: NullReferenceException の可能性
+var font = TMP_Settings.defaultFontAsset;
+
+// OK: アセット検索でフォントを取得
+var fontGuids = AssetDatabase.FindAssets("t:TMP_FontAsset");
+TMP_FontAsset font = null;
+if (fontGuids.Length > 0)
+    font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(AssetDatabase.GUIDToAssetPath(fontGuids[0]));
+```
+
+### TMP Essential Resources
+TextMeshPro を使う前に Essential Resources がインポート済みである必要がある。フォントが見つからない場合は先にインポートする。
+
 ## Troubleshooting
 - **MCP 接続エラー**: Unity Editor が起動中か確認。Edit > Project Settings > AI > Unity MCP
 - **オブジェクトが見つからない**: `Unity_ManageScene(Action: "GetHierarchy")` で名前を確認
 - **スプライトが表示されない**: SpriteRenderer のスプライトが null の可能性。テクスチャの Import Settings で Sprite (2D and UI) に設定されているか確認
 - **RunCommand 失敗**: `result.LogError()` のメッセージを確認。using の不足が多い
+- **Image 型エラー (CS0118)**: `using UIImage = UnityEngine.UI.Image;` エイリアスを使う
+- **TMP フォント null**: `TMP_Settings.defaultFontAsset` ではなく `AssetDatabase.FindAssets("t:TMP_FontAsset")` を使う
 
 $ARGUMENTS
