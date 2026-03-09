@@ -114,9 +114,15 @@ Unity_RunCommand(Code: "using UnityEngine; using UnityEditor; ...", Title: "Buil
 1. **スクリプト作成/編集** → `Unity_CreateScript` or `Edit`
 2. **コンパイル確認** → `Unity_GetConsoleLogs` でエラー確認。エラーがあれば修正して再確認
 3. **シーン構築/変更** → `Unity_RunCommand` or `Unity_ManageGameObject` 等
-4. **視覚確認** → `Unity_Camera_Capture` でスクリーンショット撮影。配置・見た目を確認
-5. **問題があれば修正** → 1 に戻る
-6. **次の機能へ進む**
+4. **視覚確認** → `Unity_Camera_Capture` でスクリーンショット撮影
+5. **スクリーンショットを見て以下を確認する**:
+   - 新しく追加した要素が画面に映っているか
+   - マテリアルの色・発光（Emission）は正しいか
+   - Post Processing（Bloom 等）が効いているか
+   - パーティクルエフェクトが出ているか（該当する場合）
+   - UI テキストが正しく表示されているか（該当する場合）
+6. **問題があれば修正** → 1 に戻る。「とりあえず動いている」で次に進まない
+7. **次の機能へ進む**
 
 各ステップで確認してから次に進むこと。まとめて作って最後に確認しない。
 
@@ -135,6 +141,9 @@ internal class CommandScript : IRunCommand
             result.LogError("Editor is still compiling or importing assets. Wait for completion and retry.");
             return;
         }
+
+        // 圧縮を無効化（python3 -m http.server 等の簡易サーバーで配信するため）
+        PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
 
         // ビルドターゲットを WebGL に切り替え
         EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.WebGL, BuildTarget.WebGL);

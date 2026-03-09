@@ -1,14 +1,72 @@
 ---
 name: unity-project-init
-description: Initialize Unity project folder structure with best practices. Use when starting a new Unity project, setting up folder structure, creating Assembly Definitions, or when user asks to organize project layout.
+description: Initialize Unity project and configure URP/Post Processing. Use when starting a new project, setting up URP pipeline, configuring post processing, or creating folder structure.
 disable-model-invocation: true
 ---
 
 # Unity Project Initialization
 
-## Folder Structure
-`Unity_RunCommand` または `Unity_ManageAsset(Action: "CreateFolder")` で以下を作成:
+## URP Pipeline Setup
+プロジェクト開始時に URP パイプラインが GraphicsSettings にセットされているか確認し、されていなければ設定する。
 
+```csharp
+internal class CommandScript : IRunCommand
+{
+    public void Execute(ExecutionResult result)
+    {
+        // 既存の URP パイプラインアセットを検索
+        var guids = AssetDatabase.FindAssets("t:UniversalRenderPipelineAsset");
+        if (guids.Length == 0)
+        {
+            result.LogError("URP Pipeline Asset not found. URP package is installed?");
+            return;
+        }
+
+        var path = AssetDatabase.GUIDToAssetPath(guids[0]);
+        var pipelineAsset = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(path);
+
+        // GraphicsSettings にセット
+        GraphicsSettings.defaultRenderPipeline = pipelineAsset;
+        QualitySettings.renderPipeline = pipelineAsset;
+
+        result.Log("URP Pipeline set: " + pipelineAsset.name + " from " + path);
+    }
+}
+```
+必要な using: `UnityEngine`, `UnityEditor`, `UnityEngine.Rendering`, `UnityEngine.Rendering.Universal`
+
+**重要**: `UniversalRenderPipelineAsset.Create()` で新規作成しない。レンダラーのリンクが壊れやすい。既存アセットを検索して使う。
+
+## URP Post Processing Setup
+Bloom, Vignette 等を有効にするには Volume + Profile を作成し、カメラで Post Processing を有効にする。
+
+```csharp
+// Volume 作成
+var volumeGO = new GameObject("PostProcessVolume");
+var volume = volumeGO.AddComponent<Volume>();
+volume.isGlobal = true;
+var profile = ScriptableObject.CreateInstance<VolumeProfile>();
+AssetDatabase.CreateAsset(profile, "Assets/Settings/PostProcessProfile.asset");
+volume.profile = profile;
+
+// Bloom
+var bloom = profile.Add<Bloom>();
+bloom.threshold.overrideState = true; bloom.threshold.value = 1.0f;
+bloom.intensity.overrideState = true; bloom.intensity.value = 0.8f;
+
+// Vignette
+var vignette = profile.Add<Vignette>();
+vignette.intensity.overrideState = true; vignette.intensity.value = 0.25f;
+
+// カメラで Post Processing を有効化
+var cam = Camera.main;
+var camData = cam.GetComponent<UniversalAdditionalCameraData>();
+if (camData == null) camData = cam.gameObject.AddComponent<UniversalAdditionalCameraData>();
+camData.renderPostProcessing = true;
+```
+必要な using: `UnityEngine.Rendering`, `UnityEngine.Rendering.Universal`
+
+## Folder Structure
 ```
 Assets/
 ├── Scripts/
@@ -16,49 +74,37 @@ Assets/
 │   │   ├── Core/           # GameManager, ServiceLocator
 │   │   ├── Gameplay/       # Game mechanics
 │   │   ├── UI/             # UI controllers
-│   │   ├── Data/           # ScriptableObjects
-│   │   └── Runtime.asmdef
+│   │   └── Data/           # ScriptableObjects
 │   └── Editor/
-│       ├── Tools/          # Custom editor tools
-│       └── Editor.asmdef
+│       └── Tools/          # Custom editor tools
 ├── Prefabs/
 ├── Scenes/
+├── Materials/
 ├── Art/
-│   ├── Materials/
 │   ├── Textures/
 │   ├── Sprites/
 │   └── Models/
 ├── Audio/
-│   ├── Music/
-│   └── SFX/
+├── Settings/               # URP Asset, Post Process Profile
 └── Resources/              # Only for dynamically loaded assets
-Tests/
-├── Editor/
-│   └── Tests.Editor.asmdef
-└── Runtime/
-    └── Tests.Runtime.asmdef
 ```
-
-## Assembly Definitions
-`.asmdef` で明確なモジュール境界を定義。Runtime と Editor を分離。
 
 ## Examples
 
-### Example 1: 新規プロジェクトの初期化
-```
-Unity_RunCommand で以下を実行:
-1. Assets/Scripts/Runtime/, Editor/ 等のフォルダ作成
-2. .asmdef ファイル作成
-3. .gitignore 確認
-```
+### Example 1: 新規3Dプロジェクトの初期化
+1. フォルダ構造を `Unity_RunCommand` で作成
+2. URP パイプラインアセットを検索して GraphicsSettings にセット
+3. Post Processing Volume を作成して Bloom, Vignette を設定
+4. `Unity_Camera_Capture` で Bloom が効いていることを確認
 
-### Example 2: 既存プロジェクトの整理
-1. `Unity_FindProjectAssets` で現在の構造確認
-2. `Unity_ManageAsset(Action: "Move")` でファイル移動
-3. .asmdef の参照を更新
+### Example 2: 既存プロジェクトの URP 有効化確認
+1. `AssetDatabase.FindAssets("t:UniversalRenderPipelineAsset")` でアセット検索
+2. `GraphicsSettings.defaultRenderPipeline` が null なら設定
+3. Camera に `UniversalAdditionalCameraData` があるか確認
 
 ## Troubleshooting
-- **フォルダが Unity に認識されない**: `AssetDatabase.Refresh()` を実行
-- **.asmdef 参照エラー**: Assembly Definition の References に必要なアセンブリを追加
+- **Bloom が効かない**: Camera の `renderPostProcessing` が `true` か確認。Volume の `isGlobal` が `true` か確認
+- **画面が真っ黒/ピンク**: URP Pipeline Asset が GraphicsSettings にセットされていない。上記の検索コードで設定する
+- **URP Asset が見つからない**: URP パッケージがインストールされていない可能性。`Unity_PackageManager_GetData` で確認
 
 $ARGUMENTS
