@@ -62,10 +62,28 @@ Unity_RunCommand(Code: "using UnityEngine; using UnityEditor; ...", Title: "Buil
 4. **大量のオブジェクト作成**: 1回の RunCommand で作るオブジェクト数が多い場合、機能ごとに分割して段階的に構築する（例: 地形→UI→ゲームロジック）
 
 ## Physics / Collision
-- 2D ゲーム: `Rigidbody2D` + `Collider2D` を使用（3D コンポーネントと混ぜない）
+
+### 3D
+- `Rigidbody` + `Collider`（BoxCollider, SphereCollider, CapsuleCollider, MeshCollider）
+- キャラクター移動: `CharacterController` または `Rigidbody` + `MovePosition`
+- 高速移動オブジェクト: `CollisionDetectionMode.Continuous` を設定
+- トリガー判定: `isTrigger = true` + `OnTriggerEnter(Collider other)`
+- レイキャスト: `Physics.Raycast`, `Physics.SphereCast` でヒット判定
+
+### 2D
+- `Rigidbody2D` + `Collider2D` を使用（3D コンポーネントと混ぜない）
 - 反射するオブジェクト（ボール等）: `PhysicsMaterial2D` (bounciness=1, friction=0) を設定
 - 高速移動オブジェクト: `CollisionDetectionMode2D.Continuous` を設定（すり抜け防止）
 - トリガー判定: `isTrigger = true` + `OnTriggerEnter2D` を使用
+
+## 3D Game Visual Style (プリミティブベース)
+外部3Dモデルなしで見栄えを良くする手法:
+- **Low-poly スタイル**: Cube, Sphere, Capsule, Cylinder の組み合わせ
+- **マテリアル**: URP Lit マテリアルで Metallic / Smoothness を調整、Emission で発光
+- **ライティング**: Directional Light + Point Light で雰囲気を作る
+- **パーティクル**: `ParticleSystem` でエフェクト（爆発、トレイル、環境演出）
+- **Post Processing**: URP Volume で Bloom, Vignette, Color Grading
+- **ProBuilder**: 簡易的な3Dメッシュ作成（com.unity.probuilder パッケージ）
 
 ## Coding Rules
 - [SerializeField] は private フィールドに使用
@@ -81,8 +99,16 @@ Unity_RunCommand(Code: "using UnityEngine; using UnityEditor; ...", Title: "Buil
 - Library/ フォルダに触れない
 - ProjectSettings/*.asset を直接編集しない → Unity Editor から設定
 - Packages/manifest.json を直接編集しない → MCP の Unity_PackageManager_ExecuteAction を使う
+- **大型パッケージ（URP, Input System 等）を MCP 経由でインストールしない** → ドメインリロードで MCP 切断が起きる。manifest.json に事前追加しておくこと
 - 旧 Input API (`Input.GetKey`, `Input.mousePosition` 等) を使わない → New Input System を使う
 - 「File > Build Settings」を案内しない → Unity 6 では「Build Profiles」に変更済み。ビルドは `Unity_RunCommand` + `BuildPipeline` で実行
+
+## PLANS.md 駆動開発
+大規模なゲーム開発では PLANS.md でフェーズ管理する:
+1. PLANS.md を作成し、フェーズごとのタスクを定義
+2. 各フェーズの完了条件を明記（「Camera Capture で確認して動作すること」等）
+3. 1フェーズ完了 → Camera Capture で確認 → PLANS.md のステータスを更新 → 次フェーズへ
+4. フェーズ間でビルドが壊れていないか `Unity_GetConsoleLogs` で確認
 
 ## Development Loop (必ずこの順序で作業する)
 1. **スクリプト作成/編集** → `Unity_CreateScript` or `Edit`

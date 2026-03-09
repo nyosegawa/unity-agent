@@ -4,14 +4,12 @@
 # Usage:
 #   ./setup.sh /full/path/to/UnityProject                  # 既存プロジェクトにセットアップ
 #   ./setup.sh /full/path/to/NewProject --create            # プロジェクト新規作成 + セットアップ
-#   ./setup.sh /full/path/to/NewProject --create --template com.unity.template.universal
 #
 # WSL の場合は必ず /mnt/c/... のフルパスを指定:
 #   ./setup.sh /mnt/c/Users/username/Projects/MyGame --create
 #
 # Options:
-#   --create          Unity プロジェクトを新規作成
-#   --template ID     テンプレート指定 (default: com.unity.template.universal)
+#   --create          Unity プロジェクトを新規作成（空プロジェクト + URP/InputSystem を manifest に追加）
 #   --skip-mcp-add    claude mcp add を実行しない
 #
 # 自動で行うこと:
@@ -45,7 +43,6 @@ to_win_path() {
 
 # ===== 引数パース =====
 CREATE_PROJECT=false
-TEMPLATE_ID="com.unity.template.universal"
 SKIP_MCP_ADD=false
 UNITY_PROJECT=""
 
@@ -54,10 +51,6 @@ while [[ $# -gt 0 ]]; do
     --create)
       CREATE_PROJECT=true
       shift
-      ;;
-    --template)
-      TEMPLATE_ID="$2"
-      shift 2
       ;;
     --skip-mcp-add)
       SKIP_MCP_ADD=true
@@ -80,10 +73,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ -z "$UNITY_PROJECT" ]; then
-  echo "Usage: $0 /full/path/to/UnityProject [--create] [--template ID]"
+  echo "Usage: $0 /full/path/to/UnityProject [--create]"
   echo ""
-  echo "  --create          新規プロジェクト作成"
-  echo "  --template ID     テンプレート (default: com.unity.template.universal)"
+  echo "  --create          新規プロジェクト作成 (URP + InputSystem + TMP 自動追加)"
   echo "  --skip-mcp-add    claude mcp add をスキップ"
   echo ""
   echo "Examples (macOS):"
@@ -146,7 +138,6 @@ if [ "$CREATE_PROJECT" = true ]; then
     echo "WARNING: $UNITY_PROJECT は既に Unity プロジェクトです。作成をスキップ。"
   else
     echo "[0] Unity プロジェクトを新規作成..."
-    echo "  Template: $TEMPLATE_ID"
 
     UNITY_EDITOR=$(find_unity_editor)
 
@@ -187,8 +178,8 @@ if [ ! -d "$UNITY_PROJECT/Assets" ] || [ ! -d "$UNITY_PROJECT/ProjectSettings" ]
   exit 1
 fi
 
-# ===== Step 1: com.unity.ai.assistant を manifest.json に追加 =====
-echo "[1/6] com.unity.ai.assistant パッケージを追加..."
+# ===== Step 1: 必要なパッケージを manifest.json に追加 =====
+echo "[1/6] パッケージを manifest.json に追加..."
 MANIFEST="$UNITY_PROJECT/Packages/manifest.json"
 
 if [ ! -f "$MANIFEST" ]; then
@@ -196,25 +187,44 @@ if [ ! -f "$MANIFEST" ]; then
   exit 1
 fi
 
-if grep -q "com.unity.ai.assistant" "$MANIFEST"; then
-  echo "  既にインストール済み。スキップ。"
+# 追加するパッケージ一覧（MCP 経由で追加すると Connection disconnected になるため、manifest に直接書く）
+declare -A PACKAGES=(
+  ["com.unity.ai.assistant"]="2.0.0-pre.1"
+  ["com.unity.render-pipelines.universal"]="17.0.3"
+  ["com.unity.inputsystem"]="1.11.2"
+  ["com.unity.textmeshpro"]="3.2.0-pre.2"
+)
+
+if command -v jq &>/dev/null; then
+  tmp=$(mktemp)
+  cp "$MANIFEST" "$tmp"
+  for pkg in "${!PACKAGES[@]}"; do
+    ver="${PACKAGES[$pkg]}"
+    if grep -q "$pkg" "$tmp"; then
+      echo "  $pkg: 既にインストール済み"
+    else
+      jq --arg pkg "$pkg" --arg ver "$ver" '.dependencies[$pkg] = $ver' "$tmp" > "${tmp}.new"
+      mv "${tmp}.new" "$tmp"
+      echo "  $pkg@$ver: 追加"
+    fi
+  done
+  cp "$tmp" "$MANIFEST"
+  rm -f "$tmp" "${tmp}.new"
+  echo "  Done (jq)"
 else
-  # jq があれば使う、なければ sed で追加
-  if command -v jq &>/dev/null; then
-    tmp=$(mktemp)
-    jq '.dependencies["com.unity.ai.assistant"] = "2.0.0-pre.1"' "$MANIFEST" > "$tmp"
-    # mv は Windows FS で権限エラーが出るため cp + rm を使う
-    cp "$tmp" "$MANIFEST"
-    rm -f "$tmp"
-    echo "  Done (jq)"
-  else
-    # sed: "dependencies": { の次の行に追加
-    sed -i.bak '/"dependencies"[[:space:]]*:[[:space:]]*{/a\
-    "com.unity.ai.assistant": "2.0.0-pre.1",
-' "$MANIFEST"
-    rm -f "$MANIFEST.bak"
-    echo "  Done (sed)"
-  fi
+  for pkg in "${!PACKAGES[@]}"; do
+    ver="${PACKAGES[$pkg]}"
+    if grep -q "$pkg" "$MANIFEST"; then
+      echo "  $pkg: 既にインストール済み"
+    else
+      sed -i.bak "/"dependencies"[[:space:]]*:[[:space:]]*{/a\\
+    \"$pkg\": \"$ver\",
+" "$MANIFEST"
+      rm -f "$MANIFEST.bak"
+      echo "  $pkg@$ver: 追加"
+    fi
+  done
+  echo "  Done (sed)"
 fi
 
 # ===== Step 2: .claude/ ディレクトリをコピー =====
