@@ -279,61 +279,64 @@ if [ "$SKIP_MCP_ADD" = true ]; then
 elif ! command -v claude &>/dev/null; then
   echo "  WARNING: claude コマンドが見つかりません。手動で MCP 接続を設定してください。"
 else
-  # 既存の unity-mcp 設定を確認
-  if claude mcp list 2>/dev/null | grep -q "unity-mcp"; then
-    echo "  unity-mcp は既に設定済み。スキップ。"
-  else
-    if is_wsl; then
-      # WSL → Windows relay
-      # 方法1: プロジェクトパスからユーザー名を抽出 (/mnt/c/Users/USERNAME/...)
-      # 方法2: glob で全ユーザーを検索
-      RELAY_WIN=""
-      if [[ "$UNITY_PROJECT" =~ ^/mnt/[a-z]/[Uu]sers/([^/]+)/ ]]; then
-        WIN_USER="${BASH_REMATCH[1]}"
-        DRIVE="${UNITY_PROJECT:5:1}"
-        candidate="/mnt/$DRIVE/Users/$WIN_USER/.unity/relay/relay_win.exe"
-        if [ -f "$candidate" ]; then
-          RELAY_WIN="$candidate"
+  # プロジェクトディレクトリで実行（-s project はカレントディレクトリ基準のため）
+  (
+    cd "$UNITY_PROJECT"
+
+    # 既存の unity-mcp 設定を確認
+    if claude mcp list 2>/dev/null | grep -q "unity-mcp"; then
+      echo "  unity-mcp は既に設定済み。スキップ。"
+    else
+      if is_wsl; then
+        # WSL → Windows relay
+        RELAY_WIN=""
+        if [[ "$UNITY_PROJECT" =~ ^/mnt/[a-z]/[Uu]sers/([^/]+)/ ]]; then
+          WIN_USER="${BASH_REMATCH[1]}"
+          DRIVE="${UNITY_PROJECT:5:1}"
+          candidate="/mnt/$DRIVE/Users/$WIN_USER/.unity/relay/relay_win.exe"
+          if [ -f "$candidate" ]; then
+            RELAY_WIN="$candidate"
+          fi
+        fi
+        # フォールバック: glob 検索
+        if [ -z "$RELAY_WIN" ]; then
+          RELAY_WIN=$(ls /mnt/c/Users/*/.unity/relay/relay_win.exe 2>/dev/null | head -1 || echo "")
+        fi
+
+        if [ -n "$RELAY_WIN" ]; then
+          echo "  relay: $RELAY_WIN"
+          claude mcp add-json unity-mcp "{\"command\":\"$RELAY_WIN\",\"args\":[\"--mcp\"]}" -s project 2>/dev/null && \
+            echo "  Done (WSL → Windows relay)" || \
+            echo "  WARNING: claude mcp add に失敗。手動で設定してください。"
+        else
+          echo "  WARNING: relay_win.exe が見つかりません。"
+          echo "  Unity Editor で com.unity.ai.assistant をインストール後、再実行してください。"
+        fi
+      elif [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        RELAY_PATH="$HOME/.unity/relay/relay"
+        if [ -f "$RELAY_PATH" ]; then
+          claude mcp add-json unity-mcp "{\"command\":\"$RELAY_PATH\",\"args\":[\"--mcp\"]}" -s project 2>/dev/null && \
+            echo "  Done (macOS relay)" || \
+            echo "  WARNING: claude mcp add に失敗。手動で設定してください。"
+        else
+          echo "  WARNING: relay バイナリが見つかりません ($RELAY_PATH)"
+          echo "  Unity Editor で com.unity.ai.assistant をインストール後、再実行してください。"
+        fi
+      else
+        # Linux
+        RELAY_PATH="$HOME/.unity/relay/relay"
+        if [ -f "$RELAY_PATH" ]; then
+          claude mcp add-json unity-mcp "{\"command\":\"$RELAY_PATH\",\"args\":[\"--mcp\"]}" -s project 2>/dev/null && \
+            echo "  Done (Linux relay)" || \
+            echo "  WARNING: claude mcp add に失敗。手動で設定してください。"
+        else
+          echo "  WARNING: relay バイナリが見つかりません ($RELAY_PATH)"
+          echo "  Unity Editor で com.unity.ai.assistant をインストール後、再実行してください。"
         fi
       fi
-      # フォールバック: glob 検索
-      if [ -z "$RELAY_WIN" ]; then
-        RELAY_WIN=$(ls /mnt/c/Users/*/.unity/relay/relay_win.exe 2>/dev/null | head -1 || echo "")
-      fi
-
-      if [ -n "$RELAY_WIN" ]; then
-        echo "  relay: $RELAY_WIN"
-        claude mcp add-json unity-mcp "{\"command\":\"$RELAY_WIN\",\"args\":[\"--mcp\"]}" -s project 2>/dev/null && \
-          echo "  Done (WSL → Windows relay)" || \
-          echo "  WARNING: claude mcp add に失敗。手動で設定してください。"
-      else
-        echo "  WARNING: relay_win.exe が見つかりません。"
-        echo "  Unity Editor で com.unity.ai.assistant をインストール後、再実行してください。"
-      fi
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-      # macOS
-      RELAY_PATH="$HOME/.unity/relay/relay"
-      if [ -f "$RELAY_PATH" ]; then
-        claude mcp add-json unity-mcp "{\"command\":\"$RELAY_PATH\",\"args\":[\"--mcp\"]}" -s project 2>/dev/null && \
-          echo "  Done (macOS relay)" || \
-          echo "  WARNING: claude mcp add に失敗。手動で設定してください。"
-      else
-        echo "  WARNING: relay バイナリが見つかりません ($RELAY_PATH)"
-        echo "  Unity Editor で com.unity.ai.assistant をインストール後、再実行してください。"
-      fi
-    else
-      # Linux
-      RELAY_PATH="$HOME/.unity/relay/relay"
-      if [ -f "$RELAY_PATH" ]; then
-        claude mcp add-json unity-mcp "{\"command\":\"$RELAY_PATH\",\"args\":[\"--mcp\"]}" -s project 2>/dev/null && \
-          echo "  Done (Linux relay)" || \
-          echo "  WARNING: claude mcp add に失敗。手動で設定してください。"
-      else
-        echo "  WARNING: relay バイナリが見つかりません ($RELAY_PATH)"
-        echo "  Unity Editor で com.unity.ai.assistant をインストール後、再実行してください。"
-      fi
     fi
-  fi
+  )
 fi
 
 echo ""
