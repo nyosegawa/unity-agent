@@ -107,8 +107,13 @@ Unity_RunCommand(Code: "using UnityEngine; using UnityEditor; ...", Title: "Buil
 大規模なゲーム開発では PLANS.md でフェーズ管理する:
 1. PLANS.md を作成し、フェーズごとのタスクを定義
 2. 各フェーズの完了条件を明記（「Camera Capture で確認して動作すること」等）
-3. 1フェーズ完了 → Camera Capture で確認 → PLANS.md のステータスを更新 → 次フェーズへ
-4. フェーズ間でビルドが壊れていないか `Unity_GetConsoleLogs` で確認
+3. **1フェーズずつ進める。複数フェーズを一気に実装しない**
+4. フェーズ完了時:
+   - `Unity_Camera_Capture` を複数アングルから撮影して見た目を確認
+   - `Unity_GetConsoleLogs` でエラーがないか確認
+   - PLANS.md のステータスを更新
+   - **スクリーンショットを見て、視覚的な品質が十分か判断してから次へ進む**
+5. 問題があればそのフェーズ内で修正を完了する。次フェーズに持ち越さない
 
 ## Development Loop (必ずこの順序で作業する)
 1. **スクリプト作成/編集** → `Unity_CreateScript` or `Edit`
