@@ -87,22 +87,22 @@ Unity_RunCommand(Code: "using UnityEngine; using UnityEditor; ...", Title: "Buil
 - **ProBuilder**: 簡易的な3Dメッシュ作成（com.unity.probuilder パッケージ）
 
 ## Coding Rules
-- [SerializeField] は private フィールドに使用
-- GetComponent() は Awake() でキャッシュ
-- Update() 内で Find/GetComponent 禁止
-- CompareTag() を使用（== "tag" 禁止）
-- Camera.main はキャッシュ
-- LINQ を Update/FixedUpdate 内で使用禁止
+- `[SerializeField]` は private フィールドに使用
+- `GetComponent()` は `Awake()` でキャッシュ。`Update()` 内では使わない
+- タグ比較は `CompareTag()` を使う
+- `Camera.main` はキャッシュして使う
+- `Update()` / `FixedUpdate()` 内では LINQ を避ける
 - Input は `UnityEngine.InputSystem` を使用: `Mouse.current`, `Keyboard.current` 等
 
-## Do NOT
-- .unity / .meta / .prefab / .asset ファイルを直接編集しない → MCP を使う
-- Library/ フォルダに触れない
-- ProjectSettings の変更は `Unity_RunCommand` で C# API（`PlayerSettings`, `QualitySettings`, `GraphicsSettings` 等）を使う
-- Packages/manifest.json を直接編集しない → MCP の Unity_PackageManager_ExecuteAction を使う
+## ファイル操作ルール
+- `.unity` / `.meta` / `.prefab` / `.asset` ファイルは MCP ツールで操作する
+- `ProjectSettings` の変更は `Unity_RunCommand` で C# API（`PlayerSettings`, `QualitySettings`, `GraphicsSettings` 等）を使う
+- パッケージ管理は `Unity_PackageManager_ExecuteAction` を使う
+- `Library/`, `Temp/`, `Logs/` には触れない
 
-- 旧 Input API (`Input.GetKey`, `Input.mousePosition` 等) を使わない → New Input System を使う
-- 「File > Build Settings」を案内しない → Unity 6 では「Build Profiles」に変更済み。ビルドは `Unity_RunCommand` + `BuildPipeline` で実行
+## Unity 6 固有ルール
+- Input は New Input System（`UnityEngine.InputSystem`）を使う。旧 API（`Input.GetKey` 等）は存在しない
+- ビルドは `Unity_RunCommand` + `BuildPipeline` で実行する。Unity 6 のメニューは「Build Profiles」（旧「Build Settings」は廃止済み）
 
 ## PLANS.md 駆動開発
 大規模なゲーム開発では PLANS.md でフェーズ管理する:
