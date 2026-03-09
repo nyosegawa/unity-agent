@@ -12,6 +12,11 @@
 - 画面上に常に何かが動いていること（パーティクル、ジェム、敵、弾）
 - 数値は仮でいいから必ず入れる。空欄や TODO を残さない
 
+## 前提条件（setup.sh で設定済み）
+- URP, Input System, TextMeshPro は manifest.json に追加済み
+- **URP パイプラインアセットを RunCommand で新規作成しない**。プロジェクトに既にある `UniversalRenderPipelineAsset` を `AssetDatabase.FindAssets("t:UniversalRenderPipelineAsset")` で検索して使うこと
+- URP パイプラインアセットが見つからない場合: Edit > Project Settings > Graphics で手動設定を案内する（RunCommand で作ろうとしない）
+
 ## 開発フロー
 1. PLANS.md を作成し、以下のフェーズを記載する
 2. 各フェーズの全タスクを実装する

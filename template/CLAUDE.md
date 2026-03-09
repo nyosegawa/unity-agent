@@ -60,6 +60,8 @@ Unity_RunCommand(Code: "using UnityEngine; using UnityEditor; ...", Title: "Buil
 2. **TextMeshPro フォント**: `TMP_Settings.defaultFontAsset` は null を返すことがある。代わりに `AssetDatabase.FindAssets("t:TMP_FontAsset")` でフォントを検索する
 3. **TMP Essential Resources**: TextMeshPro を使う前に Essential Resources がインポート済みか確認。未インポートなら `TMP_PackageResourceImporter` または手動インポートが必要
 4. **大量のオブジェクト作成**: 1回の RunCommand で作るオブジェクト数が多い場合、機能ごとに分割して段階的に構築する（例: 地形→UI→ゲームロジック）
+5. **URP パイプラインアセットを RunCommand で作成しない**: `UniversalRenderPipelineAsset.Create()` はレンダラーのリンクが壊れやすく、一度 GraphicsSettings に壊れたパイプラインがセットされると全ての RunCommand が `Object reference not set` で失敗する。URP パイプラインアセットは setup.sh で事前に manifest.json に URP を追加しておき、Unity 初回起動時に自動生成されるデフォルトアセットを使うこと。既にプロジェクトにある `UniversalRenderPipelineAsset` を `AssetDatabase.FindAssets("t:UniversalRenderPipelineAsset")` で検索して使う
+6. **パッケージの MCP 経由インストール禁止**: URP, Input System 等の大型パッケージを `Unity_PackageManager_ExecuteAction` でインストールするとドメインリロードで MCP が切断される。パッケージは `Packages/manifest.json` に事前追加しておくこと
 
 ## Physics / Collision
 
