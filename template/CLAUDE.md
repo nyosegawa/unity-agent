@@ -105,14 +105,23 @@ Unity_RunCommand(Code: "using UnityEngine; using UnityEditor; ...", Title: "Buil
 
 ## PLANS.md 駆動開発
 大規模なゲーム開発では PLANS.md でフェーズ管理する:
+
+### Phase 0: コンセプトアート生成
+nanobanana MCP が利用可能な場合、開発前にゲーム画面のイメージ画像を生成する:
+- ゲームプレイ画面（メインの見た目）
+- UI レイアウト（HUD、メニュー）
+- 主要なエフェクト（爆発、レベルアップ等）
+- 生成した画像は `Concepts/` フォルダに保存し、PLANS.md から参照する
+
+### フェーズ管理
 1. PLANS.md を作成し、フェーズごとのタスクを定義
 2. 各フェーズの完了条件を明記（「Camera Capture で確認して動作すること」等）
 3. **1フェーズずつ進める。複数フェーズを一気に実装しない**
 4. フェーズ完了時:
    - `Unity_Camera_Capture` を複数アングルから撮影して見た目を確認
+   - **コンセプト画像と比較して、見た目が目標に近づいているか判断する**
    - `Unity_GetConsoleLogs` でエラーがないか確認
    - PLANS.md のステータスを更新
-   - **スクリーンショットを見て、視覚的な品質が十分か判断してから次へ進む**
 5. 問題があればそのフェーズ内で修正を完了する。次フェーズに持ち越さない
 
 ## Development Loop (必ずこの順序で作業する)
@@ -126,6 +135,7 @@ Unity_RunCommand(Code: "using UnityEngine; using UnityEditor; ...", Title: "Buil
    - Post Processing（Bloom 等）が効いているか
    - パーティクルエフェクトが出ているか（該当する場合）
    - UI テキストが正しく表示されているか（該当する場合）
+   - `Concepts/` にコンセプト画像がある場合、それと比較して方向性が合っているか
 6. **問題があれば修正** → 1 に戻る。「とりあえず動いている」で次に進まない
 7. **次の機能へ進む**
 
